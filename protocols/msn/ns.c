@@ -184,7 +184,7 @@ static int msn_ns_command(struct msn_handler_data *handler, char **cmd, int num_
 			return(0);
 		}
 
-		return(msn_ns_write(ic, handler->fd, "CVR %d 0x0409 mac 10.2.0 ppc macmsgs 3.5.1 macmsgs %s\r\n",
+		return(msn_ns_write(ic, handler->fd, "CVR %d 0x0409 mac 10.2.0 ppc macmsgs 3.5.1 macmsgs %s VmVyc2lvbjogMQ0KWGZyQ291bnQ6IDINClhmclNlbnRVVENUaW1lOiA2MzU2MTQ3OTU5NzgzOTAwMDANCklzR2VvWGZyOiB0cnVlDQo=\r\n",
 		                    ++md->trId, ic->acc->user));
 	} else if (strcmp(cmd[0], "CVR") == 0) {
 		/* We don't give a damn about the information we just received */
