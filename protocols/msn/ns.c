@@ -296,9 +296,6 @@ static int msn_ns_command(struct msn_handler_data *handler, char **cmd, int num_
 			imc_logout(ic, TRUE);
 			return(0);
 		}
-	} else if (strcmp(cmd[0], "BLP") == 0) {
-		msn_ns_send_adl_start(ic);
-		return msn_ns_finish_login(ic);
 	} else if (strcmp(cmd[0], "ADL") == 0) {
 		if (num_parts >= 3 && strcmp(cmd[2], "OK") == 0) {
 			msn_ns_send_adl(ic);
@@ -767,15 +764,13 @@ void msn_auth_got_passport_token(struct im_connection *ic, const char *token, co
 
 void msn_auth_got_contact_list(struct im_connection *ic)
 {
-	struct msn_data *md;
-
 	/* Dead connection? */
 	if (g_slist_find(msn_connections, ic) == NULL) {
 		return;
 	}
 
-	md = ic->proto_data;
-	msn_ns_write(ic, -1, "BLP %d %s\r\n", ++md->trId, "BL");
+	msn_ns_send_adl_start(ic);
+	msn_ns_finish_login(ic);
 }
 
 static gboolean msn_ns_send_adl_1(gpointer key, gpointer value, gpointer data)
