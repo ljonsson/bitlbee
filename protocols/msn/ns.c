@@ -209,53 +209,6 @@ static int msn_ns_command(struct msn_handler_data *handler, char **cmd, int num_
 
 			imcb_log(ic, "Transferring to other server");
 			return msn_ns_connect(ic, handler, server, port);
-		} else if (num_parts >= 6 && strcmp(cmd[2], "SB") == 0) {
-			struct msn_switchboard *sb;
-
-			server = strchr(cmd[3], ':');
-			if (!server) {
-				imcb_error(ic, "Syntax error");
-				imc_logout(ic, TRUE);
-				return(0);
-			}
-			*server = 0;
-			port = atoi(server + 1);
-			server = cmd[3];
-
-			if (strcmp(cmd[4], "CKI") != 0) {
-				imcb_error(ic, "Unknown authentication method for switchboard");
-				imc_logout(ic, TRUE);
-				return(0);
-			}
-
-			debug("Connecting to a new switchboard with key %s", cmd[5]);
-
-			if ((sb = msn_sb_create(ic, server, port, cmd[5], MSN_SB_NEW)) == NULL) {
-				/* Although this isn't strictly fatal for the NS connection, it's
-				   definitely something serious (we ran out of file descriptors?). */
-				imcb_error(ic, "Could not create new switchboard");
-				imc_logout(ic, TRUE);
-				return(0);
-			}
-
-			if (md->msgq) {
-				struct msn_message *m = md->msgq->data;
-				GSList *l;
-
-				sb->who = g_strdup(m->who);
-
-				/* Move all the messages to the first user in the message
-				   queue to the switchboard message queue. */
-				l = md->msgq;
-				while (l) {
-					m = l->data;
-					l = l->next;
-					if (strcmp(m->who, sb->who) == 0) {
-						sb->msgq = g_slist_append(sb->msgq, m);
-						md->msgq = g_slist_remove(md->msgq, m);
-					}
-				}
-			}
 		} else {
 			imcb_error(ic, "Syntax error");
 			imc_logout(ic, TRUE);
@@ -360,7 +313,6 @@ static int msn_ns_command(struct msn_handler_data *handler, char **cmd, int num_
 		                  (cap & 1 ? OPT_MOBILE : 0),
 		                  st->name, NULL);
 
-		msn_sb_stop_keepalives(msn_sb_by_handle(ic, handle));
 	} else if (strcmp(cmd[0], "FLN") == 0) {
 		const char *handle;
 
@@ -370,47 +322,6 @@ static int msn_ns_command(struct msn_handler_data *handler, char **cmd, int num_
 
 		handle = msn_normalize_handle(cmd[1]);
 		imcb_buddy_status(ic, handle, 0, NULL, NULL);
-		msn_sb_start_keepalives(msn_sb_by_handle(ic, handle), TRUE);
-	} else if (strcmp(cmd[0], "RNG") == 0) {
-		struct msn_switchboard *sb;
-		char *server;
-		int session, port;
-
-		if (num_parts < 7) {
-			imcb_error(ic, "Syntax error");
-			imc_logout(ic, TRUE);
-			return(0);
-		}
-
-		session = atoi(cmd[1]);
-
-		server = strchr(cmd[2], ':');
-		if (!server) {
-			imcb_error(ic, "Syntax error");
-			imc_logout(ic, TRUE);
-			return(0);
-		}
-		*server = 0;
-		port = atoi(server + 1);
-		server = cmd[2];
-
-		if (strcmp(cmd[3], "CKI") != 0) {
-			imcb_error(ic, "Unknown authentication method for switchboard");
-			imc_logout(ic, TRUE);
-			return(0);
-		}
-
-		debug("Got a call from %s (session %d). Key = %s", cmd[5], session, cmd[4]);
-
-		if ((sb = msn_sb_create(ic, server, port, cmd[4], session)) == NULL) {
-			/* Although this isn't strictly fatal for the NS connection, it's
-			   definitely something serious (we ran out of file descriptors?). */
-			imcb_error(ic, "Could not create new switchboard");
-			imc_logout(ic, TRUE);
-			return(0);
-		} else {
-			sb->who = g_strdup(msn_normalize_handle(cmd[5]));
-		}
 	} else if (strcmp(cmd[0], "OUT") == 0) {
 		int allow_reconnect = TRUE;
 
@@ -894,11 +805,12 @@ int msn_ns_finish_login(struct im_connection *ic)
 	return 1;
 }
 
+// TODO: typing notifications, nudges lol, etc
 int msn_ns_sendmessage(struct im_connection *ic, bee_user_t *bu, const char *text)
 {
 	struct msn_data *md = ic->proto_data;
-	int type = 0;
-	char *buf, *handle;
+	int retval = 0;
+	char *buf;
 
 	if (strncmp(text, "\r\r\r", 3) == 0) {
 		/* Err. Shouldn't happen but I guess it can. Don't send others
@@ -906,27 +818,10 @@ int msn_ns_sendmessage(struct im_connection *ic, bee_user_t *bu, const char *tex
 		return 1;
 	}
 
-	/* This might be a federated contact. Get its network number,
-	   prefixed to bu->handle with a colon. Default is 1. */
-	for (handle = bu->handle; g_ascii_isdigit(*handle); handle++) {
-		type = type * 10 + *handle - '0';
-	}
-	if (*handle == ':') {
-		handle++;
-	} else {
-		type = 1;
-	}
-
-	buf = g_strdup_printf("%s%s", MSN_MESSAGE_HEADERS, text);
-
-	if (msn_ns_write(ic, -1, "UUM %d %s %d %d %zd\r\n%s",
-	                 ++md->trId, handle, type,
-	                 1,          /* type == IM (not nudge/typing) */
-	                 strlen(buf), buf)) {
-		return 1;
-	} else {
-		return 0;
-	}
+	buf = g_strdup_printf(MSN_MESSAGE_HEADERS, bu->handle, ic->acc->user, md->uuid, strlen(text), text);
+	retval = msn_ns_write(ic, -1, "SDG %d %zd\r\n%s", ++md->trId, strlen(buf), buf);
+	g_free(buf);
+	return retval;
 }
 
 void msn_ns_oim_send_queue(struct im_connection *ic, GSList **msgq)
