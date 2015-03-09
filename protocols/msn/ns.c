@@ -779,7 +779,7 @@ void msn_auth_got_contact_list(struct im_connection *ic)
 
 static gboolean msn_ns_send_adl_1(gpointer key, gpointer value, gpointer data)
 {
-	struct xt_node *adl = data, *d, *c;
+	struct xt_node *adl = data, *d, *c, *s;
 	struct bee_user *bu = value;
 	struct msn_buddy_data *bd = bu->data;
 	struct msn_data *md = bu->ic->proto_data;
@@ -808,8 +808,11 @@ static gboolean msn_ns_send_adl_1(gpointer key, gpointer value, gpointer data)
 	g_snprintf(l, sizeof(l), "%d", bd->flags & 7);
 	c = xt_new_node("c", NULL, NULL);
 	xt_add_attr(c, "n", handle);
-	xt_add_attr(c, "l", l);
 	xt_add_attr(c, "t", "1");   /* FIXME: Network type, i.e. 32 for Y!MSG */
+	s = xt_new_node("s", NULL, NULL);
+	xt_add_attr(s, "n", "IM");
+	xt_add_attr(s, "l", l);
+	xt_insert_child(c, s);
 	xt_insert_child(d, c);
 
 	/* Do this in batches of 100. */
