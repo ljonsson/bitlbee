@@ -206,10 +206,10 @@ static void msn_set_away(struct im_connection *ic, char *state, char *message)
 		md->away_state = msn_away_state_list + 1;
 	}
 
-	if (!msn_ns_write(ic, -1, "CHG %d %s %d:%02d\r\n", ++md->trId, md->away_state->code, MSN_CAP1, MSN_CAP2)) {
+	/*if (!msn_ns_write(ic, -1, "CHG %d %s %d:%02d\r\n", ++md->trId, md->away_state->code, MSN_CAP1, MSN_CAP2)) {
 		return;
-	}
-
+	}*/
+/*
 	uux = g_markup_printf_escaped("<EndpointData><Capabilities>%d:%02d"
 	                              "</Capabilities></EndpointData>",
 	                              MSN_CAP1, MSN_CAP2);
@@ -221,7 +221,7 @@ static void msn_set_away(struct im_connection *ic, char *state, char *message)
 	                              "<State>%s</State></PrivateEndpointData>",
 	                              md->uuid,
 	                              strcmp(md->away_state->code, "IDL") ? "false" : "true",
-	                              1,  /* ? */
+	                              1,  // ?
 	                              md->away_state->code);
 	msn_ns_write(ic, -1, "UUX %d %zd\r\n%s", ++md->trId, strlen(uux), uux);
 	g_free(uux);
@@ -231,7 +231,7 @@ static void msn_set_away(struct im_connection *ic, char *state, char *message)
 	                              "<MachineGuid>%s</MachineGuid></Data>",
 	                              message ? message : "", md->uuid);
 	msn_ns_write(ic, -1, "UUX %d %zd\r\n%s", ++md->trId, strlen(uux), uux);
-	g_free(uux);
+	g_free(uux);*/
 }
 
 static void msn_get_info(struct im_connection *ic, char *who)

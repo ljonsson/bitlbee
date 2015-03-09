@@ -875,11 +875,13 @@ int msn_ns_finish_login(struct im_connection *ic)
 	}
 
 	if ((md->flags & MSN_DONE_ADL) && (md->flags & MSN_GOT_PROFILE)) {
+		imcb_connected(ic);
+		/*
 		if (md->flags & MSN_EMAIL_UNVERIFIED) {
 			imcb_connected(ic);
 		} else {
 			return msn_ns_set_display_name(ic, set_getstr(&ic->acc->set, "display_name"));
-		}
+		}*/
 	}
 
 	return 1;
