@@ -292,7 +292,7 @@ static int msn_ns_command(struct msn_handler_data *handler, char **cmd, int num_
 		/* Coming up is cmd[2] bytes of stuff we're supposed to
 		   censore. Meh. */
 		handler->msglen = atoi(cmd[2]);
-	} else if (strcmp(cmd[0], "NFY") == 0) {
+	} else if ((strcmp(cmd[0], "NFY") == 0) || (strcmp(cmd[0], "SDG") == 0)) {
 		if (num_parts >= 3) {
 			handler->msglen = atoi(cmd[2]);
 		}
@@ -448,6 +448,29 @@ static int msn_ns_message(struct msn_handler_data *handler, char *msg, int msgle
 				}
 			}
 		}
+	} else if (strcmp(cmd[0], "SDG") == 0) {
+		char **parts = g_strsplit(msg, "\r\n\r\n", 4);
+		char *from = NULL;
+		char *mt = NULL;
+		char *who = NULL;
+		char *s = NULL;
+
+		if ((from = get_rfc822_header(parts[0], "From", 0)) &&
+		    (mt = get_rfc822_header(parts[2], "Message-Type", 0)) &&
+		    (s = strchr(from, ';'))) {
+
+			who = g_strndup(from + 2, s - from - 2);
+
+			if (strcmp(mt, "Control/Typing") == 0) {
+				imcb_buddy_typing(ic, who, OPT_TYPING);
+			} else if (strcmp(mt, "Text") == 0) {
+				imcb_buddy_msg(ic, who, parts[3], 0, 0);
+			}
+		}
+		g_free(from);
+		g_free(mt);
+		g_free(who);
+		return 1;
 	}
 
 	return 1;
