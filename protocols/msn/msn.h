@@ -226,7 +226,6 @@ void msn_auth_got_passport_token(struct im_connection *ic, const char *token, co
 void msn_auth_got_contact_list(struct im_connection *ic);
 int msn_ns_finish_login(struct im_connection *ic);
 int msn_ns_sendmessage(struct im_connection *ic, struct bee_user *bu, const char *text);
-void msn_ns_oim_send_queue(struct im_connection *ic, GSList **msgq);
 
 /* msn_util.c */
 int msn_buddy_list_add(struct im_connection *ic, msn_buddy_flags_t list, const char *who, const char *realname_,
@@ -235,7 +234,6 @@ int msn_buddy_list_remove(struct im_connection *ic, msn_buddy_flags_t list, cons
 void msn_buddy_ask(bee_user_t *bu);
 char **msn_linesplit(char *line);
 int msn_handler(struct msn_handler_data *h);
-void msn_msgq_purge(struct im_connection *ic, GSList **list);
 char *msn_p11_challenge(char *challenge);
 gint msn_domaintree_cmp(gconstpointer a_, gconstpointer b_);
 struct msn_group *msn_group_by_name(struct im_connection *ic, const char *name);
