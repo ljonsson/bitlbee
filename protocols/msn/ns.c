@@ -493,6 +493,10 @@ static int msn_ns_command(struct msn_handler_data *handler, char **cmd, int num_
 		if (num_parts >= 2) {
 			handler->msglen = atoi(cmd[1]);
 		}
+	} else if (strcmp(cmd[0], "NFY") == 0) {
+		if (num_parts >= 3) {
+			handler->msglen = atoi(cmd[2]);
+		}
 	} else if (strcmp(cmd[0], "UBM") == 0) {
 		if (num_parts >= 7) {
 			handler->msglen = atoi(cmd[6]);
